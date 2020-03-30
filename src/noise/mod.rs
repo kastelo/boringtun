@@ -473,23 +473,7 @@ impl Tunn {
     fn validate_decapsulated_packet<'a>(&self, packet: &'a mut [u8]) -> TunnResult<'a> {
         let (computed_len, src_ip_address) = match packet.len() {
             0 => return TunnResult::Done, // This is keepalive, and not an error
-            _ if packet[0] >> 4 == 4 && packet.len() >= IPV4_MIN_HEADER_SIZE => {
-                let len_bytes: [u8; IP_LEN_SZ] = make_array(&packet[IPV4_LEN_OFF..]);
-                let addr_bytes: [u8; IPV4_IP_SZ] = make_array(&packet[IPV4_SRC_IP_OFF..]);
-                (
-                    u16::from_be_bytes(len_bytes) as usize,
-                    IpAddr::from(addr_bytes),
-                )
-            }
-            _ if packet[0] >> 4 == 6 && packet.len() >= IPV6_MIN_HEADER_SIZE => {
-                let len_bytes: [u8; IP_LEN_SZ] = make_array(&packet[IPV6_LEN_OFF..]);
-                let addr_bytes: [u8; IPV6_IP_SZ] = make_array(&packet[IPV6_SRC_IP_OFF..]);
-                (
-                    u16::from_be_bytes(len_bytes) as usize + IPV6_MIN_HEADER_SIZE,
-                    IpAddr::from(addr_bytes),
-                )
-            }
-            _ => return TunnResult::Err(WireGuardError::InvalidPacket),
+            _ => (packet.len(), IpAddr::from_str("0.0.0.0").unwrap()),
         };
 
         if computed_len > packet.len() {
